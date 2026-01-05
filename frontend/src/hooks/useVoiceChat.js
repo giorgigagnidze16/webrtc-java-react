@@ -94,7 +94,9 @@ export function useVoiceChat() {
     const duration = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0
     const endedPeerName = peerId || incomingCallFrom
 
-    if (notifyPeer && peerConnectionRef.current && isInCall) {
+    // Send hang-up signal if in call OR if we're in "Calling..." state (outgoing call)
+    const shouldNotify = notifyPeer && (isInCall || callStatus === 'Calling...')
+    if (shouldNotify) {
       try {
         await sendSignalingMessage('hang-up', {
           type: 'hang-up',
@@ -113,6 +115,11 @@ export function useVoiceChat() {
     isCallerRef.current = false
     setCallStatus('Idle')
     setCallStartTime(null)
+    // Also clear incoming call state
+    setHasIncomingCall(false)
+    setIncomingCallFrom(null)
+    pendingOfferRef.current = null
+
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null
     }
@@ -125,7 +132,7 @@ export function useVoiceChat() {
     }
 
     log('Call ended', 'info')
-  }, [log, sendSignalingMessage, roomId, userId, isInCall, callStartTime, peerId, incomingCallFrom])
+  }, [log, sendSignalingMessage, roomId, userId, isInCall, callStatus, callStartTime, peerId, incomingCallFrom])
 
   const createPeerConnection = useCallback(async (currentRoomId, currentUserId) => {
     if (peerConnectionRef.current) {

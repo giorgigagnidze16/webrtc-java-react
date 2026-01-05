@@ -31,11 +31,18 @@ export function useVoiceChat() {
   const [callStatus, setCallStatus] = useState('Idle')
   const [logs, setLogs] = useState([])
 
+  // Incoming call state
+  const [hasIncomingCall, setHasIncomingCall] = useState(false)
+  const [incomingCallFrom, setIncomingCallFrom] = useState(null)
+  const [callEndedData, setCallEndedData] = useState(null)
+  const [callStartTime, setCallStartTime] = useState(null)
+
   const eventSourceRef = useRef(null)
   const peerConnectionRef = useRef(null)
   const localStreamRef = useRef(null)
   const remoteAudioRef = useRef(null)
   const isCallerRef = useRef(false)
+  const pendingOfferRef = useRef(null)
 
   const log = useCallback((message, type = 'info') => {
     const now = new Date()
@@ -83,6 +90,10 @@ export function useVoiceChat() {
   }, [])
 
   const hangUp = useCallback(async (notifyPeer = true) => {
+    // Calculate call duration for ended screen
+    const duration = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0
+    const endedPeerName = peerId || incomingCallFrom
+
     if (notifyPeer && peerConnectionRef.current && isInCall) {
       try {
         await sendSignalingMessage('hang-up', {
@@ -101,11 +112,20 @@ export function useVoiceChat() {
     setIsInCall(false)
     isCallerRef.current = false
     setCallStatus('Idle')
+    setCallStartTime(null)
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null
     }
+
+    // Show call ended screen if there was an actual call
+    if (duration > 0 || callStartTime) {
+      setCallEndedData({ duration, peerName: endedPeerName })
+      // Auto-dismiss after 2.5 seconds
+      setTimeout(() => setCallEndedData(null), 2500)
+    }
+
     log('Call ended', 'info')
-  }, [log, sendSignalingMessage, roomId, userId, isInCall])
+  }, [log, sendSignalingMessage, roomId, userId, isInCall, callStartTime, peerId, incomingCallFrom])
 
   const createPeerConnection = useCallback(async (currentRoomId, currentUserId) => {
     if (peerConnectionRef.current) {
@@ -141,6 +161,7 @@ export function useVoiceChat() {
         case 'connected':
           setIsInCall(true)
           setCallStatus('Connected')
+          setCallStartTime(Date.now())
           log('Call connected!', 'success')
           break
         case 'disconnected':
@@ -166,9 +187,21 @@ export function useVoiceChat() {
   }, [sendSignalingMessage, log, hangUp])
 
   const handleOffer = useCallback(async (message, currentRoomId, currentUserId) => {
+    // Store the offer for accept/decline
+    pendingOfferRef.current = { message, currentRoomId, currentUserId }
+    setIncomingCallFrom(message.senderId)
+    setHasIncomingCall(true)
+    log(`Incoming call from ${message.senderId}`, 'info')
+  }, [log])
+
+  const acceptCall = useCallback(async () => {
+    if (!pendingOfferRef.current) return
+
+    const { message, currentRoomId, currentUserId } = pendingOfferRef.current
     setPeerId(message.senderId)
     isCallerRef.current = false
-    log(`Incoming call from ${message.senderId}`, 'info')
+    setHasIncomingCall(false)
+    setIncomingCallFrom(null)
 
     try {
       const pc = await createPeerConnection(currentRoomId, currentUserId)
@@ -182,11 +215,20 @@ export function useVoiceChat() {
         senderId: currentUserId,
         payload: { type: answer.type, sdp: answer.sdp }
       })
-      log('Answer sent', 'info')
+      log('Call accepted, answer sent', 'info')
     } catch (error) {
-      log(`Failed to handle offer: ${error.message}`, 'error')
+      log(`Failed to accept call: ${error.message}`, 'error')
     }
+
+    pendingOfferRef.current = null
   }, [createPeerConnection, sendSignalingMessage, log])
+
+  const declineCall = useCallback(async () => {
+    setHasIncomingCall(false)
+    setIncomingCallFrom(null)
+    pendingOfferRef.current = null
+    log('Call declined', 'info')
+  }, [log])
 
   const handleAnswer = useCallback(async (message) => {
     try {
@@ -418,10 +460,18 @@ export function useVoiceChat() {
     isMuted,
     callStatus,
     logs,
+    // Incoming call state
+    hasIncomingCall,
+    incomingCallFrom,
+    callEndedData,
+    callStartTime,
+    // Actions
     handleJoin,
     startCall,
     toggleMute,
     hangUp,
+    acceptCall,
+    declineCall,
     setRemoteAudioElement
   }
 }

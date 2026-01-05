@@ -1,0 +1,346 @@
+/* ============================================
+   CALL OVERLAY - FULL SCREEN CONTAINER
+   ============================================ */
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 24px 48px;
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================================
+   CALL SCREEN CONTAINER
+   ============================================ */
+.call-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  animation: screenSlideIn 0.25s ease-out;
+}
+
+@keyframes screenSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   AVATAR COMPONENT
+   ============================================ */
+.call-avatar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.call-avatar {
+  position: relative;
+  z-index: 2;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+  letter-spacing: 2px;
+}
+
+.call-avatar.small {
+  width: 100px;
+  height: 100px;
+  font-size: 36px;
+}
+
+.call-avatar.large {
+  width: 160px;
+  height: 160px;
+  font-size: 56px;
+}
+
+/* ============================================
+   ANIMATED PULSE RINGS
+   ============================================ */
+.pulse-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid rgba(102, 126, 234, 0.5);
+  animation: pulseRing 2s ease-out infinite;
+}
+
+.pulse-ring:nth-child(1) { animation-delay: 0s; }
+.pulse-ring:nth-child(2) { animation-delay: 0.5s; }
+.pulse-ring:nth-child(3) { animation-delay: 1s; }
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   CALL INFO SECTION (CENTER)
+   ============================================ */
+.call-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.call-peer-name {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.call-status-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+}
+
+.call-timer {
+  font-size: 20px;
+  font-weight: 500;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+/* ============================================
+   CALL CONTROLS (BOTTOM)
+   ============================================ */
+.call-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+.call-controls.spread {
+  gap: 64px;
+}
+
+.call-control-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  outline: none;
+}
+
+.call-control-btn:hover {
+  transform: scale(1.08);
+}
+
+.call-control-btn:active {
+  transform: scale(0.95);
+}
+
+.call-control-btn svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+}
+
+/* Button Variants */
+.call-control-btn.accept {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+}
+
+.call-control-btn.accept:hover {
+  box-shadow: 0 6px 24px rgba(74, 222, 128, 0.4);
+}
+
+.call-control-btn.decline,
+.call-control-btn.hangup {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+}
+
+.call-control-btn.decline:hover,
+.call-control-btn.hangup:hover {
+  box-shadow: 0 6px 24px rgba(248, 113, 113, 0.4);
+}
+
+.call-control-btn.mute {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.call-control-btn.mute:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.call-control-btn.mute.active {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.call-control-btn.mute.active:hover {
+  box-shadow: 0 6px 24px rgba(251, 191, 36, 0.4);
+}
+
+/* Large button variant for primary actions */
+.call-control-btn.large {
+  width: 72px;
+  height: 72px;
+}
+
+.call-control-btn.large svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* ============================================
+   CALL ENDED SCREEN
+   ============================================ */
+.call-ended-screen {
+  animation: callEndedPulse 0.3s ease-out;
+}
+
+@keyframes callEndedPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.call-ended-duration {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 4px;
+}
+
+/* ============================================
+   BUTTON LABELS
+   ============================================ */
+.control-btn-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-btn-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-height: 600px) {
+  .call-overlay {
+    padding: 40px 24px 30px;
+  }
+
+  .call-avatar {
+    width: 100px;
+    height: 100px;
+    font-size: 36px;
+  }
+
+  .pulse-ring {
+    width: 100px;
+    height: 100px;
+  }
+
+  .call-peer-name {
+    font-size: 22px;
+  }
+
+  .call-info {
+    margin-top: 20px;
+  }
+
+  .call-control-btn {
+    width: 56px;
+    height: 56px;
+  }
+
+  .call-control-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .call-control-btn.large {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+@media (max-width: 400px) {
+  .call-controls {
+    gap: 16px;
+  }
+
+  .call-controls.spread {
+    gap: 48px;
+  }
+}

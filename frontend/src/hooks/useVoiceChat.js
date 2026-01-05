@@ -231,11 +231,21 @@ export function useVoiceChat() {
   }, [createPeerConnection, sendSignalingMessage, log])
 
   const declineCall = useCallback(async () => {
+    // Notify the caller that the call was declined
+    try {
+      await sendSignalingMessage('hang-up', {
+        type: 'hang-up',
+        roomId,
+        senderId: userId
+      })
+    } catch {
+      // Ignore errors when sending decline signal
+    }
     setHasIncomingCall(false)
     setIncomingCallFrom(null)
     pendingOfferRef.current = null
     log('Call declined', 'info')
-  }, [log])
+  }, [log, sendSignalingMessage, roomId, userId])
 
   const handleAnswer = useCallback(async (message) => {
     try {

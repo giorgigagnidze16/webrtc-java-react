@@ -58,9 +58,10 @@ class VoiceChat {
             callControls: document.getElementById('callControls'),
             connectionDot: document.getElementById('connectionDot'),
             connectionStatus: document.getElementById('connectionStatus'),
+            statusConnection: document.getElementById('statusConnection'),
+            statusCall: document.getElementById('statusCall'),
             roomStatus: document.getElementById('roomStatus'),
             peerStatus: document.getElementById('peerStatus'),
-            callStatus: document.getElementById('callStatus'),
             audioVisualizer: document.getElementById('audioVisualizer'),
             logPanel: document.getElementById('logPanel'),
             remoteAudio: document.getElementById('remoteAudio')
@@ -82,7 +83,7 @@ class VoiceChat {
         this.elements.joinBtn.addEventListener('click', () => this.handleJoin());
         this.elements.callBtn.addEventListener('click', () => this.startCall());
         this.elements.muteBtn.addEventListener('click', () => this.toggleMute());
-        this.elements.hangupBtn.addEventListener('click', () => this.hangUp());
+        this.elements.hangupBtn.addEventListener('click', () => this.hangUp(true));
     }
 
     /**
@@ -265,6 +266,11 @@ class VoiceChat {
                 await this.handleIceCandidate(message);
                 break;
 
+            case 'hang-up':
+                this.log(`${message.senderId} ended the call`, 'info');
+                this.hangUp(false);
+                break;
+
             case 'room-full':
                 this.log('Room is full (max 2 users)', 'error');
                 this.leaveRoom();
@@ -278,7 +284,8 @@ class VoiceChat {
     handleUserJoined(message) {
         this.peerId = message.senderId;
         this.log(`${this.peerId} joined the room`, 'success');
-        this.elements.peerStatus.textContent = this.peerId;
+        this.elements.peerStatus.innerHTML = `<span class="material-icons">person</span> ${this.peerId}`;
+        this.elements.peerStatus.style.color = '';
         this.elements.callBtn.disabled = false;
     }
 
@@ -288,11 +295,12 @@ class VoiceChat {
     handleUserLeft(message) {
         this.log(`${message.senderId} left the room`, 'info');
         this.peerId = null;
-        this.elements.peerStatus.textContent = 'No peer';
+        this.elements.peerStatus.textContent = 'None';
+        this.elements.peerStatus.style.color = 'var(--gray-400)';
         this.elements.callBtn.disabled = true;
 
         if (this.isInCall) {
-            this.hangUp();
+            this.hangUp(false);
         }
     }
 
@@ -326,7 +334,7 @@ class VoiceChat {
             });
 
             this.log('Offer sent', 'info');
-            this.elements.callStatus.textContent = 'Calling...';
+            this.updateCallStatus('Calling...');
 
         } catch (error) {
             this.log(`Failed to start call: ${error.message}`, 'error');
@@ -438,14 +446,14 @@ class VoiceChat {
             switch (state) {
                 case 'connected':
                     this.isInCall = true;
-                    this.elements.callStatus.textContent = 'Connected';
-                    this.elements.audioVisualizer.classList.add('call-active');
+                    this.updateCallStatus('Connected');
+                    this.elements.audioVisualizer.classList.add('active');
                     this.log('Call connected!', 'success');
                     break;
 
                 case 'disconnected':
                 case 'failed':
-                    this.hangUp();
+                    this.hangUp(false);
                     break;
             }
 
@@ -479,10 +487,10 @@ class VoiceChat {
             track.enabled = !this.isMuted;
         });
 
-        this.elements.muteBtn.classList.toggle('muted', this.isMuted);
+        this.elements.muteBtn.classList.toggle('active', this.isMuted);
         this.elements.muteBtn.innerHTML = this.isMuted ?
-            '<span>🔇</span> Unmute' :
-            '<span>🎤</span> Mute';
+            '<span class="material-icons">mic_off</span> Muted' :
+            '<span class="material-icons">mic</span> Mute';
 
         this.log(this.isMuted ? 'Microphone muted' : 'Microphone unmuted', 'info');
     }
@@ -490,7 +498,19 @@ class VoiceChat {
     /**
      * Hang up the call
      */
-    hangUp() {
+    async hangUp(notifyPeer = true) {
+        if (notifyPeer && this.peerConnection && this.isInCall) {
+            try {
+                await this.sendSignalingMessage('hang-up', {
+                    type: 'hang-up',
+                    roomId: this.roomId,
+                    senderId: this.userId
+                });
+            } catch {
+                // Ignore errors when sending hang-up signal
+            }
+        }
+
         if (this.peerConnection) {
             this.peerConnection.close();
             this.peerConnection = null;
@@ -498,8 +518,8 @@ class VoiceChat {
 
         this.isInCall = false;
         this.isCaller = false;
-        this.elements.callStatus.textContent = 'Idle';
-        this.elements.audioVisualizer.classList.remove('call-active');
+        this.updateCallStatus('Idle');
+        this.elements.audioVisualizer.classList.remove('active');
         this.elements.remoteAudio.srcObject = null;
 
         this.log('Call ended', 'info');
@@ -565,20 +585,42 @@ class VoiceChat {
     updateConnectionStatus(status) {
         const dot = this.elements.connectionDot;
         const text = this.elements.connectionStatus;
+        const statusBadge = this.elements.statusConnection;
 
-        dot.className = 'status-dot';
+        dot.className = 'header-status-dot';
 
         switch (status) {
             case 'connected':
                 dot.classList.add('connected');
-                text.textContent = 'Connected';
+                text.textContent = 'Online';
+                statusBadge.innerHTML = '<span class="status-badge status-badge-success">Connected</span>';
                 break;
             case 'connecting':
                 dot.classList.add('connecting');
                 text.textContent = 'Connecting...';
+                statusBadge.innerHTML = '<span class="status-badge status-badge-warning">Connecting...</span>';
                 break;
             default:
-                text.textContent = 'Disconnected';
+                text.textContent = 'Offline';
+                statusBadge.innerHTML = '<span class="status-badge status-badge-neutral">Disconnected</span>';
+        }
+    }
+
+    /**
+     * Update call status indicator
+     */
+    updateCallStatus(status) {
+        const statusBadge = this.elements.statusCall;
+
+        switch (status) {
+            case 'Connected':
+                statusBadge.innerHTML = '<span class="status-badge status-badge-success">In Call</span>';
+                break;
+            case 'Calling...':
+                statusBadge.innerHTML = '<span class="status-badge status-badge-warning">Calling...</span>';
+                break;
+            default:
+                statusBadge.innerHTML = '<span class="status-badge status-badge-neutral">Idle</span>';
         }
     }
 
@@ -586,20 +628,34 @@ class VoiceChat {
      * Update UI based on current state
      */
     updateUI() {
-        const { joinBtn, callBtn, muteBtn, hangupBtn, callControls, roomStatus, peerStatus } = this.elements;
+        const { joinBtn, callBtn, muteBtn, hangupBtn, callControls, roomStatus, peerStatus, roomId, userId } = this.elements;
 
         if (this.isInRoom) {
-            joinBtn.innerHTML = '<span>🚪</span> Leave Room';
-            joinBtn.className = 'btn-hangup';
-            callControls.style.display = 'flex';
+            joinBtn.innerHTML = '<span class="material-icons">logout</span> Leave Room';
+            joinBtn.className = 'btn btn-danger btn-lg btn-block';
+            callControls.classList.add('visible');
             roomStatus.textContent = this.roomId;
-            peerStatus.textContent = this.peerId || 'Waiting for peer...';
+            roomStatus.style.color = '';
+            roomId.disabled = true;
+            userId.disabled = true;
+
+            if (this.peerId) {
+                peerStatus.innerHTML = `<span class="material-icons">person</span> ${this.peerId}`;
+                peerStatus.style.color = '';
+            } else {
+                peerStatus.textContent = 'Waiting...';
+                peerStatus.style.color = 'var(--gray-400)';
+            }
         } else {
-            joinBtn.innerHTML = '<span>📡</span> Join Room';
-            joinBtn.className = 'btn-join';
-            callControls.style.display = 'none';
+            joinBtn.innerHTML = '<span class="material-icons">login</span> Join Room';
+            joinBtn.className = 'btn btn-primary btn-lg btn-block';
+            callControls.classList.remove('visible');
             roomStatus.textContent = 'Not joined';
-            peerStatus.textContent = 'No peer';
+            roomStatus.style.color = 'var(--gray-400)';
+            peerStatus.textContent = 'None';
+            peerStatus.style.color = 'var(--gray-400)';
+            roomId.disabled = false;
+            userId.disabled = false;
         }
 
         callBtn.disabled = !this.peerId || this.isInCall;
@@ -613,6 +669,12 @@ class VoiceChat {
     log(message, type = 'info') {
         const now = new Date();
         const time = now.toLocaleTimeString('en-US', { hour12: false });
+
+        // Clear empty state if present
+        const emptyState = this.elements.logPanel.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
 
         const entry = document.createElement('div');
         entry.className = 'log-entry';

@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC Voice Chat</title>
+    <title>Voice Connect - Enterprise Communication</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,220 +13,373 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #059669;
+            --success-light: #10b981;
+            --danger: #dc2626;
+            --danger-light: #ef4444;
+            --warning: #d97706;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.5;
+        }
+
+        .app {
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 16px 24px;
+            display: flex;
             align-items: center;
-            color: #e4e4e7;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
         }
 
-        .container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .header-logo .material-icons {
+            font-size: 24px;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .header-subtitle {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--gray-50);
             border-radius: 20px;
-            padding: 40px;
+            font-size: 0.875rem;
+        }
+
+        .header-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gray-400);
+        }
+
+        .header-status-dot.connected {
+            background: var(--success);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+        }
+
+        .header-status-dot.connecting {
+            background: var(--warning);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 32px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
             width: 100%;
-            max-width: 500px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
         }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
-            background: linear-gradient(90deg, #4ade80, #22d3ee);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
         }
 
-        .input-group {
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Form Elements */
+        .form-group {
             margin-bottom: 20px;
         }
 
-        label {
+        .form-label {
             display: block;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: #a1a1aa;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 6px;
         }
 
-        input {
+        .form-input {
             width: 100%;
-            padding: 14px 18px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            color: var(--gray-900);
+            background: white;
+            transition: all 0.15s ease;
+            font-family: inherit;
         }
 
-        input:focus {
+        .form-input:focus {
             outline: none;
-            border-color: #4ade80;
-            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        input::placeholder {
-            color: #71717a;
+        .form-input::placeholder {
+            color: var(--gray-400);
         }
 
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 25px;
+        .form-input:disabled {
+            background: var(--gray-50);
+            color: var(--gray-500);
         }
 
-        button {
-            flex: 1;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
+        /* Buttons */
+        .btn {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
         }
 
-        button:disabled {
+        .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .btn-join {
-            background: linear-gradient(135deg, #4ade80, #22c55e);
-            color: #000;
+        .btn .material-icons {
+            font-size: 20px;
         }
 
-        .btn-join:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(74, 222, 128, 0.3);
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
 
-        .btn-call {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: #fff;
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
         }
 
-        .btn-call:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        .btn-success {
+            background: var(--success);
+            color: white;
         }
 
-        .btn-hangup {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: #fff;
+        .btn-success:hover:not(:disabled) {
+            background: #047857;
         }
 
-        .btn-hangup:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        .btn-danger {
+            background: var(--danger);
+            color: white;
         }
 
-        .btn-mute {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #000;
+        .btn-danger:hover:not(:disabled) {
+            background: #b91c1c;
         }
 
-        .btn-mute.muted {
-            background: linear-gradient(135deg, #6b7280, #4b5563);
-            color: #fff;
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
         }
 
-        .status-panel {
-            margin-top: 30px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--gray-200);
         }
 
-        .status-row {
+        .btn-secondary.active {
+            background: var(--gray-700);
+            color: white;
+            border-color: var(--gray-700);
+        }
+
+        .btn-lg {
+            padding: 14px 28px;
+            font-size: 1rem;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Call Controls */
+        .call-controls {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .call-controls.visible {
+            display: grid;
+        }
+
+        /* Status Panel */
+        .status-list {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .status-item {
+            display: flex;
             align-items: center;
-            margin-bottom: 12px;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
         }
 
-        .status-row:last-child {
-            margin-bottom: 0;
+        .status-item-label {
+            font-size: 0.875rem;
+            color: var(--gray-500);
         }
 
-        .status-label {
-            color: #71717a;
-            font-size: 0.85rem;
-        }
-
-        .status-value {
+        .status-item-value {
+            font-size: 0.875rem;
             font-weight: 500;
+            color: var(--gray-900);
             display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-item-value .material-icons {
+            font-size: 18px;
+        }
+
+        .status-badge {
+            display: inline-flex;
             align-items: center;
             gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8125rem;
+            font-weight: 500;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #71717a;
+        .status-badge-success {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success);
         }
 
-        .status-dot.connected {
-            background: #4ade80;
-            box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+        .status-badge-warning {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning);
         }
 
-        .status-dot.connecting {
-            background: #fbbf24;
-            animation: pulse 1s infinite;
+        .status-badge-danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
         }
 
-        .status-dot.error {
-            background: #ef4444;
+        .status-badge-neutral {
+            background: var(--gray-100);
+            color: var(--gray-600);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
+        /* Audio Visualizer */
         .audio-visualizer {
-            margin-top: 20px;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
+            height: 48px;
+            background: var(--gray-50);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            padding: 0 20px;
-            overflow: hidden;
+            gap: 3px;
+            margin-top: 24px;
         }
 
         .audio-bar {
-            width: 4px;
-            height: 10px;
-            background: #4ade80;
+            width: 3px;
+            height: 8px;
+            background: var(--gray-300);
             border-radius: 2px;
             transition: height 0.1s ease;
         }
 
-        .call-active .audio-bar {
-            animation: audioWave 0.5s ease infinite;
+        .audio-visualizer.active .audio-bar {
+            background: var(--primary);
+            animation: audioWave 0.6s ease-in-out infinite;
         }
 
         @keyframes audioWave {
-            0%, 100% { height: 10px; }
-            50% { height: 40px; }
+            0%, 100% { height: 8px; }
+            50% { height: 32px; }
         }
 
         .audio-bar:nth-child(1) { animation-delay: 0s; }
@@ -234,128 +389,217 @@
         .audio-bar:nth-child(5) { animation-delay: 0.25s; }
         .audio-bar:nth-child(6) { animation-delay: 0.05s; }
         .audio-bar:nth-child(7) { animation-delay: 0.3s; }
-        .audio-bar:nth-child(8) { animation-delay: 0.1s; }
+        .audio-bar:nth-child(8) { animation-delay: 0.12s; }
+        .audio-bar:nth-child(9) { animation-delay: 0.18s; }
+        .audio-bar:nth-child(10) { animation-delay: 0.08s; }
+        .audio-bar:nth-child(11) { animation-delay: 0.22s; }
+        .audio-bar:nth-child(12) { animation-delay: 0.14s; }
 
+        /* Right Column */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Activity Log */
         .log-panel {
-            margin-top: 20px;
-            max-height: 150px;
+            max-height: 300px;
             overflow-y: auto;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.75rem;
         }
 
         .log-entry {
-            margin-bottom: 6px;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.8125rem;
         }
 
         .log-entry:last-child {
             border-bottom: none;
-            margin-bottom: 0;
         }
 
         .log-time {
-            color: #71717a;
-            margin-right: 10px;
+            color: var(--gray-400);
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.75rem;
+            white-space: nowrap;
         }
 
         .log-message {
-            color: #a1a1aa;
+            color: var(--gray-600);
+            flex: 1;
         }
 
-        .log-message.success { color: #4ade80; }
-        .log-message.error { color: #ef4444; }
-        .log-message.info { color: #3b82f6; }
+        .log-message.success { color: var(--success); }
+        .log-message.error { color: var(--danger); }
+        .log-message.info { color: var(--primary); }
 
-        /* Hidden audio element */
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-500);
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Hidden Elements */
         audio {
             display: none;
         }
 
         /* Responsive */
-        @media (max-width: 540px) {
-            .container {
-                margin: 20px;
-                padding: 25px;
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 16px;
             }
-            
-            .button-group {
-                flex-direction: column;
+
+            .header {
+                padding: 12px 16px;
+            }
+
+            .header-subtitle {
+                display: none;
+            }
+
+            .call-controls {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎙️ Voice Chat</h1>
-        
-        <div class="input-group">
-            <label for="roomId">Room ID</label>
-            <input type="text" id="roomId" placeholder="Enter a room name..." value="room-1">
-        </div>
-        
-        <div class="input-group">
-            <label for="userId">Your Name</label>
-            <input type="text" id="userId" placeholder="Enter your name...">
-        </div>
-        
-        <div class="button-group">
-            <button id="joinBtn" class="btn-join">
-                <span>📡</span> Join Room
-            </button>
-        </div>
-        
-        <div class="button-group" id="callControls" style="display: none;">
-            <button id="callBtn" class="btn-call" disabled>
-                <span>📞</span> Call
-            </button>
-            <button id="muteBtn" class="btn-mute" disabled>
-                <span>🎤</span> Mute
-            </button>
-            <button id="hangupBtn" class="btn-hangup" disabled>
-                <span>📵</span> Hang Up
-            </button>
-        </div>
-        
-        <div class="status-panel">
-            <div class="status-row">
-                <span class="status-label">Connection</span>
-                <span class="status-value">
-                    <span class="status-dot" id="connectionDot"></span>
-                    <span id="connectionStatus">Disconnected</span>
-                </span>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                <div class="header-logo">
+                    <span class="material-icons">headset_mic</span>
+                </div>
+                <div>
+                    <div class="header-title">Voice Connect</div>
+                    <div class="header-subtitle">Enterprise Communication</div>
+                </div>
             </div>
-            <div class="status-row">
-                <span class="status-label">Room</span>
-                <span class="status-value" id="roomStatus">Not joined</span>
+            <div class="header-status">
+                <span class="header-status-dot" id="connectionDot"></span>
+                <span id="connectionStatus">Offline</span>
             </div>
-            <div class="status-row">
-                <span class="status-label">Peer</span>
-                <span class="status-value" id="peerStatus">No peer</span>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Column - Conference Setup -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Conference Room</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label" for="roomId">Room ID</label>
+                        <input type="text" id="roomId" class="form-input" placeholder="Enter conference room ID..." value="room-1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="userId">Display Name</label>
+                        <input type="text" id="userId" class="form-input" placeholder="Enter your name...">
+                    </div>
+
+                    <button id="joinBtn" class="btn btn-primary btn-lg btn-block">
+                        <span class="material-icons">login</span>
+                        Join Room
+                    </button>
+
+                    <div class="call-controls" id="callControls">
+                        <button id="callBtn" class="btn btn-success" disabled>
+                            <span class="material-icons">phone</span>
+                            Call
+                        </button>
+                        <button id="muteBtn" class="btn btn-secondary" disabled>
+                            <span class="material-icons">mic</span>
+                            Mute
+                        </button>
+                        <button id="hangupBtn" class="btn btn-danger" disabled>
+                            <span class="material-icons">call_end</span>
+                            End
+                        </button>
+                    </div>
+
+                    <!-- Audio Visualizer -->
+                    <div class="audio-visualizer" id="audioVisualizer">
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                    </div>
+                </div>
             </div>
-            <div class="status-row">
-                <span class="status-label">Call</span>
-                <span class="status-value" id="callStatus">Idle</span>
+
+            <!-- Right Column - Status & Logs -->
+            <div class="right-column">
+                <!-- Status Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Session Status</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="status-list">
+                            <div class="status-item">
+                                <span class="status-item-label">Connection</span>
+                                <span class="status-item-value" id="statusConnection">
+                                    <span class="status-badge status-badge-neutral">Disconnected</span>
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-item-label">Room</span>
+                                <span class="status-item-value" id="roomStatus" style="color: var(--gray-400)">Not joined</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-item-label">Participant</span>
+                                <span class="status-item-value" id="peerStatus" style="color: var(--gray-400)">None</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-item-label">Call Status</span>
+                                <span class="status-item-value" id="statusCall">
+                                    <span class="status-badge status-badge-neutral">Idle</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Log Card -->
+                <div class="card" style="flex: 1;">
+                    <div class="card-header">
+                        <h2 class="card-title">Activity Log</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-panel" id="logPanel">
+                            <div class="empty-state">
+                                <p>No activity yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div class="audio-visualizer" id="audioVisualizer">
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-        </div>
-        
-        <div class="log-panel" id="logPanel"></div>
-        
+        </main>
+
         <!-- Hidden audio element for remote stream -->
         <audio id="remoteAudio" autoplay></audio>
     </div>

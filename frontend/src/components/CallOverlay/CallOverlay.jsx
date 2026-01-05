@@ -3,6 +3,7 @@ import { Avatar } from './Avatar'
 import { PulseRings } from './PulseRings'
 import { IncomingCallControls, OutgoingCallControls, InCallControls } from './CallControls'
 import { useCallTimer } from '../../hooks/useCallTimer'
+import { useRingtone } from '../../hooks/useRingtone'
 import './CallOverlay.css'
 
 function IncomingCallScreen({ callerName, onAccept, onDecline }) {
@@ -101,6 +102,10 @@ export function CallOverlay({
   onHangup,
   onMuteToggle
 }) {
+  useRingtone(hasIncomingCall, '/ringtone.mp3')
+
+  useRingtone(callStatus === 'Calling...', '/beeping.mp3')
+
   const currentScreen = useMemo(() => {
     if (callEndedData) return 'ended'
     if (hasIncomingCall) return 'incoming'

@@ -43,6 +43,7 @@ export function useVoiceChat() {
   const remoteAudioRef = useRef(null)
   const isCallerRef = useRef(false)
   const pendingOfferRef = useRef(null)
+  const callTimeoutRef = useRef(null)
 
   const log = useCallback((message, type = 'info') => {
     const now = new Date()
@@ -464,6 +465,29 @@ export function useVoiceChat() {
       cleanup()
     }
   }, [])
+
+  // 30-second timeout for unanswered outgoing calls
+  useEffect(() => {
+    if (callStatus === 'Calling...') {
+      callTimeoutRef.current = setTimeout(() => {
+        log('Call timed out - no answer', 'info')
+        hangUp()
+      }, 30000)
+    } else {
+      // Clear timeout when call status changes (connected, ended, etc.)
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current)
+        callTimeoutRef.current = null
+      }
+    }
+
+    return () => {
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current)
+        callTimeoutRef.current = null
+      }
+    }
+  }, [callStatus, hangUp])
 
   return {
     roomId,

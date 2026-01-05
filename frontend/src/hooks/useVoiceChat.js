@@ -82,7 +82,18 @@ export function useVoiceChat() {
     setCallStatus('Idle')
   }, [])
 
-  const hangUp = useCallback(() => {
+  const hangUp = useCallback(async (notifyPeer = true) => {
+    if (notifyPeer && peerConnectionRef.current && isInCall) {
+      try {
+        await sendSignalingMessage('hang-up', {
+          type: 'hang-up',
+          roomId,
+          senderId: userId
+        })
+      } catch {
+        // Ignore errors when sending hang-up signal
+      }
+    }
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close()
       peerConnectionRef.current = null
@@ -94,7 +105,7 @@ export function useVoiceChat() {
       remoteAudioRef.current.srcObject = null
     }
     log('Call ended', 'info')
-  }, [log])
+  }, [log, sendSignalingMessage, roomId, userId, isInCall])
 
   const createPeerConnection = useCallback(async (currentRoomId, currentUserId) => {
     if (peerConnectionRef.current) {
@@ -134,7 +145,7 @@ export function useVoiceChat() {
           break
         case 'disconnected':
         case 'failed':
-          hangUp()
+          hangUp(false)
           break
       }
     }
@@ -239,8 +250,12 @@ export function useVoiceChat() {
               log(`${message.senderId} left the room`, 'info')
               setPeerId(null)
               if (peerConnectionRef.current) {
-                hangUp()
+                hangUp(false)
               }
+              break
+            case 'hang-up':
+              log(`${message.senderId} ended the call`, 'info')
+              hangUp(false)
               break
             case 'offer':
               handleOffer(message, currentRoomId, currentUserId)

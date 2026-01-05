@@ -168,6 +168,16 @@ public class SignalingController {
     }
 
     /**
+     * Hang up call - notify peer immediately
+     */
+    @PostMapping("/hang-up")
+    public ResponseEntity<String> hangUp(@RequestBody SignalingMessage message) {
+        logger.info("Forwarding hang-up from {} in room {}", message.getSenderId(), message.getRoomId());
+        forwardToOtherPeers(message);
+        return ResponseEntity.ok("sent");
+    }
+
+    /**
      * Leave a room
      */
     @PostMapping("/leave")
